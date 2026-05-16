@@ -3,7 +3,7 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { 
   Flag, AlertTriangle, Clock, Activity, ShieldAlert, WifiOff, 
   Search, ChevronUp, ChevronDown, ChevronRight, TrendingUp, 
-  TrendingDown, Minus, Car, Zap, RefreshCw, Power
+  TrendingDown, Minus, Car, Power, Star, Map, Info
 } from 'lucide-react';
 
 const TRACK_STATUSES = [
@@ -12,20 +12,69 @@ const TRACK_STATUSES = [
   { code: 'CODE60', text: 'CODE 60', color: 'bg-purple-600', textColor: 'text-white' }
 ];
 
-/* STREAMING_CHUNK:Mock Data Generator for Demo Mode */
-// Pre-defined base cars for the demo mode
-const MOCK_BASE_CARS = [
-  { id: '1', class: 'SP 9', number: '1', team: 'Frikadelli Racing Team', car: 'Ferrari 296 GT3', driver: 'Bamber, Catsburg, Pittard, Fernandez Laser' },
-  { id: '911', class: 'SP 9', number: '911', team: 'Manthey EMA', car: 'Porsche 911 GT3 R', driver: 'Estre, Güven, Preining, Ten Voorde' },
-  { id: '3', class: 'SP 9', number: '3', team: 'Mercedes-AMG Team Bilstein', car: 'Mercedes-AMG GT3', driver: 'Maini, Bird, Owega, Beretta' },
-  { id: '98', class: 'SP 9', number: '98', team: 'ROWE RACING', car: 'BMW M4 GT3', driver: 'Marciello, Martin, Wittmann, Farfus' },
-  { id: '20', class: 'SP-PRO', number: '20', team: 'Scherer Sport PHX', car: 'Audi R8 LMS GT3', driver: 'Schramm, Berhorst, Winkelhock' },
-  { id: '188', class: 'SP 10', number: '188', team: 'PROsport-Racing', car: 'Aston Martin Vantage GT4', driver: 'Böckmann, Müller, Rindone' },
-  { id: '333', class: 'TCR', number: '333', team: 'Hyundai Motorsport N', car: 'Hyundai Elantra TCR', driver: 'Basseng, Lauck, Michelisz' },
-  { id: '120', class: 'Cup 2', number: '120', team: 'KKrämer Racing', car: 'Porsche 911 GT3 Cup', driver: 'Krämer, Brück, Kranz' },
-  { id: '80', class: 'SP-X', number: '80', team: 'Glickenhaus Racing', car: 'SCG 004c', driver: 'Mutsch, Mailleux, Arnold, Ledogar' },
-  { id: '50', class: 'V2T', number: '50', team: 'Adrenalin Motorsport', car: 'BMW 330i', driver: 'Kruse, Griessner, Rink' },
-];
+/* STREAMING_CHUNK:Track Map Component */
+const TrackMap = ({ trackStatus }) => {
+  const [incidentSector, setIncidentSector] = useState(null);
+
+  // Simulate an incident in a specific sector when the track status changes from Green
+  useEffect(() => {
+    if (trackStatus.code !== 'GREEN') {
+      setIncidentSector(Math.floor(Math.random() * 3) + 1);
+    } else {
+      setIncidentSector(null);
+    }
+  }, [trackStatus.code]);
+
+  // Styling helper for the SVG paths based on sector status
+  const getPathStyle = (sectorNumber) => {
+    if (incidentSector === sectorNumber) {
+      if (trackStatus.code === 'YELLOW') return "stroke-yellow-400 drop-shadow-[0_0_8px_rgba(250,204,21,0.8)] animate-pulse";
+      if (trackStatus.code === 'CODE60') return "stroke-purple-500 drop-shadow-[0_0_8px_rgba(168,85,247,0.8)] animate-pulse";
+    }
+    return "stroke-gray-600/50";
+  };
+
+  return (
+    <div className="flex items-center gap-4 bg-[#0a0a0c] px-6 py-2 rounded-xl border border-gray-800 shadow-inner">
+      <div className="flex flex-col items-end">
+        <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest flex items-center gap-1">
+          <Map className="w-3 h-3" /> Live Track Map
+        </span>
+        <span className="text-xs text-gray-400 font-mono">
+          {incidentSector ? `Incident in Sector ${incidentSector}` : 'All Sectors Clear'}
+        </span>
+      </div>
+      
+      {/* Abstracted Nordschleife + GP Circuit SVG */}
+      <svg viewBox="0 0 200 200" className="w-16 h-16 transform -rotate-12">
+        {/* Sector 1: GP Circuit */}
+        <path 
+          d="M 70,150 L 50,150 C 30,150 20,170 40,180 C 60,190 70,170 70,150 Z" 
+          fill="none" 
+          strokeWidth="8" 
+          strokeLinecap="round"
+          className={`transition-all duration-500 ${getPathStyle(1)}`} 
+        />
+        {/* Sector 2: Nordschleife North (Hatzenbach to Karussell) */}
+        <path 
+          d="M 70,150 C 50,100 20,50 80,30 C 130,10 160,30 170,70" 
+          fill="none" 
+          strokeWidth="8" 
+          strokeLinecap="round"
+          className={`transition-all duration-500 ${getPathStyle(2)}`} 
+        />
+        {/* Sector 3: Nordschleife South (Karussell to Döttinger Höhe back to GP) */}
+        <path 
+          d="M 170,70 C 180,110 160,150 140,150 L 70,150" 
+          fill="none" 
+          strokeWidth="8" 
+          strokeLinecap="round"
+          className={`transition-all duration-500 ${getPathStyle(3)}`} 
+        />
+      </svg>
+    </div>
+  );
+};
 
 /* STREAMING_CHUNK:Main Component & State Initialization */
 export default function App() {
@@ -34,18 +83,22 @@ export default function App() {
   const [filterClass, setFilterClass] = useState('ALL');
   const [lastUpdated, setLastUpdated] = useState(new Date());
   
-  // Connection & Demo states
   const [isConnected, setIsConnected] = useState(false);
-  const [isDemoMode, setIsDemoMode] = useState(false);
-  
-  // Interactive UI states
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedCarId, setExpandedCarId] = useState(null);
   const [sortConfig, setSortConfig] = useState({ key: 'pos', direction: 'asc' });
   
-  // Refs for tracking changes
+  // Favorites State
+  const [favorites, setFavorites] = useState(() => {
+    try {
+      return new Set(JSON.parse(localStorage.getItem('n24-favorites') || '[]'));
+    } catch {
+      return new Set();
+    }
+  });
+  
   const prevPositionsRef = useRef({});
-  const positionTrendsRef = useRef({}); // Tracks if they moved up or down
+  const positionTrendsRef = useRef({});
 
   /* STREAMING_CHUNK:Data Transformation Logic */
   const transformN24Data = (rawData) => {
@@ -73,7 +126,6 @@ export default function App() {
   };
 
   /* STREAMING_CHUNK:Position Trend Calculator */
-  // Calculates and stores if a car moved up or down compared to last known position
   const updatePositionTrends = (newCars) => {
     const newTrends = { ...positionTrendsRef.current };
     
@@ -82,7 +134,6 @@ export default function App() {
       if (prevPos !== undefined) {
         if (car.pos < prevPos) newTrends[car.id] = 'UP';
         else if (car.pos > prevPos) newTrends[car.id] = 'DOWN';
-        // If same, keep existing trend for a bit or clear it (we'll keep it for visual stability)
       }
       prevPositionsRef.current[car.id] = car.pos;
     });
@@ -91,97 +142,58 @@ export default function App() {
     return newCars;
   };
 
-  /* STREAMING_CHUNK:WebSocket and Demo Effects */
+  /* STREAMING_CHUNK:WebSocket Connection Effect */
   useEffect(() => {
-    let ws = null;
-    let demoInterval = null;
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsUrl = `${protocol}//${window.location.host}`;
+    const isDev = window.location.port.includes('517');
+    const finalWsUrl = isDev ? 'ws://localhost:8080' : wsUrl;
 
-    if (isDemoMode) {
-      // --- DEMO MODE LOGIC ---
-      setIsConnected(true);
-      let currentMockPos = MOCK_BASE_CARS.map((c, i) => ({ ...c, pos: i + 1, pits: Math.floor(Math.random() * 5) }));
-      
-      demoInterval = setInterval(() => {
-        // Randomly shuffle a couple of positions and generate times
-        const newData = [...currentMockPos].map(car => {
-          const isPit = Math.random() > 0.95;
-          const minSec = 8 + Math.floor(Math.random() * 2);
-          const sec = Math.floor(Math.random() * 60).toString().padStart(2, '0');
-          const ms = Math.floor(Math.random() * 999).toString().padStart(3, '0');
-          const lapTime = `${minSec}:${sec}.${ms}`;
-          
-          return {
-            ...car,
-            classPos: Math.ceil(car.pos / 2), // Fake class pos
-            gap: car.pos === 1 ? '-' : `+${(car.pos * 1.5).toFixed(1)}s`,
-            interval: car.pos === 1 ? '-' : `+${(Math.random() * 2).toFixed(3)}s`,
-            lastLap: isPit ? 'IN PIT' : lapTime,
-            bestLap: `8:12.${Math.floor(Math.random() * 999)}`,
-            status: isPit ? 'Pit' : 'Track',
-            pits: isPit ? car.pits + 1 : car.pits
-          };
-        });
+    const ws = new WebSocket(finalWsUrl);
 
-        // Occasionally swap positions
-        if (Math.random() > 0.7) {
-          const idx1 = Math.floor(Math.random() * newData.length);
-          const idx2 = Math.floor(Math.random() * newData.length);
-          const tempPos = newData[idx1].pos;
-          newData[idx1].pos = newData[idx2].pos;
-          newData[idx2].pos = tempPos;
-        }
+    ws.onopen = () => setIsConnected(true);
+    ws.onclose = () => setIsConnected(false);
 
-        newData.sort((a, b) => a.pos - b.pos);
-        currentMockPos = newData;
+    ws.onmessage = (event) => {
+      try {
+        const liveData = JSON.parse(event.data);
+        let processedCars = [];
         
-        setCars(updatePositionTrends(newData));
+        if (liveData.cars) {
+          processedCars = liveData.cars;
+          if (liveData.trackStatus) setTrackStatus(liveData.trackStatus);
+        } else {
+          processedCars = transformN24Data(liveData);
+        }
+        
+        if (processedCars.length > 0) {
+          setCars(updatePositionTrends(processedCars));
+        }
         setLastUpdated(new Date());
-        
-        // Randomly change track status
-        if (Math.random() > 0.9) {
-          setTrackStatus(TRACK_STATUSES[Math.floor(Math.random() * TRACK_STATUSES.length)]);
-        }
-      }, 2000);
-
-    } else {
-      // --- REAL WEBSOCKET LOGIC ---
-      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      const wsUrl = `${protocol}//${window.location.host}`;
-      const isDev = window.location.port.includes('517');
-      const finalWsUrl = isDev ? 'ws://localhost:8080' : wsUrl;
-
-      ws = new WebSocket(finalWsUrl);
-
-      ws.onopen = () => setIsConnected(true);
-      ws.onclose = () => setIsConnected(false);
-
-      ws.onmessage = (event) => {
-        try {
-          const liveData = JSON.parse(event.data);
-          let processedCars = [];
-          
-          if (liveData.cars) {
-            processedCars = liveData.cars;
-            if (liveData.trackStatus) setTrackStatus(liveData.trackStatus);
-          } else {
-            processedCars = transformN24Data(liveData);
-          }
-          
-          if (processedCars.length > 0) {
-            setCars(updatePositionTrends(processedCars));
-          }
-          setLastUpdated(new Date());
-        } catch (err) {
-          console.error("Error parsing WebSocket data:", err);
-        }
-      };
-    }
+      } catch (err) {
+        console.error("Error parsing WebSocket data:", err);
+      }
+    };
 
     return () => {
       if (ws) ws.close();
-      if (demoInterval) clearInterval(demoInterval);
     };
-  }, [isDemoMode]);
+  }, []);
+
+  /* STREAMING_CHUNK:Favorites Logic */
+  const toggleFavorite = (e, carId) => {
+    e.stopPropagation(); // Prevent expanding the row when clicking the star
+    setFavorites(prev => {
+      const newFavs = new Set(prev);
+      if (newFavs.has(carId)) {
+        newFavs.delete(carId);
+      } else {
+        newFavs.add(carId);
+      }
+      localStorage.setItem('n24-favorites', JSON.stringify(Array.from(newFavs)));
+      return newFavs;
+    });
+  };
 
   /* STREAMING_CHUNK:Sorting and Filtering Logic */
   const handleSort = (key) => {
@@ -274,7 +286,7 @@ export default function App() {
             <div className="flex items-center gap-2 mt-0.5">
               <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`}></div>
               <p className="text-[10px] text-gray-400 font-mono tracking-widest uppercase">
-                {isConnected ? (isDemoMode ? 'SIMULATION ACTIVE' : 'LIVE FEED SECURE') : 'LINK LOST'}
+                {isConnected ? 'LIVE FEED SECURE' : 'LINK LOST'}
               </p>
             </div>
           </div>
@@ -295,19 +307,6 @@ export default function App() {
             />
           </div>
 
-          {/* Demo Toggle */}
-          <button
-            onClick={() => setIsDemoMode(!isDemoMode)}
-            className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-bold uppercase transition-all ${
-              isDemoMode 
-                ? 'bg-purple-600/20 text-purple-400 border border-purple-500/50 hover:bg-purple-600/30' 
-                : 'bg-gray-800 text-gray-400 border border-gray-700 hover:bg-gray-700'
-            }`}
-          >
-            <Zap className={`w-4 h-4 ${isDemoMode ? 'fill-purple-400' : ''}`} />
-            {isDemoMode ? 'Demo On' : 'Demo Off'}
-          </button>
-
           {/* Clock */}
           <div className="hidden md:flex flex-col items-end bg-[#1a1a24] px-4 py-1.5 rounded-lg border border-gray-800">
             <span className="text-[10px] text-gray-500 uppercase font-bold tracking-wider">Local Time</span>
@@ -319,19 +318,24 @@ export default function App() {
       </header>
 
       {/* STREAMING_CHUNK:Main Rendering - Status & Filters */}
-      {!isConnected && !isDemoMode && (
+      {!isConnected && (
         <div className="bg-red-900/90 backdrop-blur text-white px-6 py-4 flex items-center justify-center gap-3 border-b border-red-500">
           <WifiOff className="w-5 h-5 animate-pulse" />
-          <span className="font-bold tracking-wide">Awaiting Telemetry Link... Ensure WebSocket Server is active or enable Demo Mode.</span>
+          <span className="font-bold tracking-wide">Awaiting Telemetry Link... Ensure WebSocket Server is active.</span>
         </div>
       )}
 
-      {/* Track Status Bar */}
-      <div className={`w-full py-3 px-6 flex items-center justify-center gap-4 shadow-[inset_0_-10px_20px_rgba(0,0,0,0.2)] transition-colors duration-700 border-b border-white/10 ${trackStatus.color} ${trackStatus.textColor}`}>
-        {trackStatus.code === 'GREEN' && <Flag className="w-8 h-8 drop-shadow-md" />}
-        {trackStatus.code === 'YELLOW' && <AlertTriangle className="w-8 h-8 animate-pulse drop-shadow-md" />}
-        {trackStatus.code === 'CODE60' && <ShieldAlert className="w-8 h-8 animate-bounce drop-shadow-md" />}
-        <span className="text-2xl font-black uppercase tracking-[0.2em] drop-shadow-md">{trackStatus.text}</span>
+      {/* Track Status Bar & Map Integration */}
+      <div className={`w-full py-4 px-6 flex flex-col md:flex-row items-center justify-between gap-6 shadow-[inset_0_-10px_20px_rgba(0,0,0,0.2)] transition-colors duration-700 border-b border-white/10 ${trackStatus.color} ${trackStatus.textColor}`}>
+        <div className="flex items-center gap-4">
+          {trackStatus.code === 'GREEN' && <Flag className="w-10 h-10 drop-shadow-md" />}
+          {trackStatus.code === 'YELLOW' && <AlertTriangle className="w-10 h-10 animate-pulse drop-shadow-md" />}
+          {trackStatus.code === 'CODE60' && <ShieldAlert className="w-10 h-10 animate-bounce drop-shadow-md" />}
+          <span className="text-3xl font-black uppercase tracking-[0.2em] drop-shadow-md">{trackStatus.text}</span>
+        </div>
+        
+        {/* Nordschleife Track Map Component */}
+        <TrackMap trackStatus={trackStatus} />
       </div>
 
       <div className="max-w-[1600px] mx-auto px-4 py-6 flex flex-col xl:flex-row justify-between items-start xl:items-center gap-6">
@@ -355,11 +359,6 @@ export default function App() {
             ))}
           </div>
         </div>
-        
-        <div className="flex items-center gap-3 text-xs text-gray-500 bg-[#1a1a24] px-4 py-2 rounded-full border border-gray-800">
-          <RefreshCw className={`w-4 h-4 ${isConnected ? 'animate-spin-slow' : ''}`} />
-          <span className="font-mono">Active Frames: {processedData.length}</span>
-        </div>
       </div>
 
       {/* STREAMING_CHUNK:Main Rendering - Interactive Table */}
@@ -369,6 +368,7 @@ export default function App() {
             <table className="min-w-full divide-y divide-gray-800/60 relative">
               <thead className="bg-[#1a1a24] sticky top-0 z-10 shadow-md">
                 <tr>
+                  <th scope="col" className="px-4 py-4 w-10 text-center text-[10px] font-black text-gray-400 uppercase tracking-widest cursor-pointer">Fav</th>
                   {[
                     { key: 'pos', label: 'Pos', align: 'left' },
                     { key: 'class', label: 'Class', align: 'left' },
@@ -397,10 +397,10 @@ export default function App() {
               <tbody className="divide-y divide-gray-800/40">
                 {processedData.length === 0 ? (
                   <tr>
-                    <td colSpan="9" className="px-6 py-24 text-center">
+                    <td colSpan="10" className="px-6 py-24 text-center">
                        <div className="flex flex-col items-center justify-center gap-4 text-gray-500">
-                          <Activity className="w-12 h-12 animate-pulse" />
-                          <p className="font-mono text-lg tracking-widest uppercase">No Active Telemetry</p>
+                          <Clock className="w-12 h-12" />
+                          <p className="font-mono text-lg tracking-widest uppercase">Waiting for timing data...</p>
                        </div>
                     </td>
                   </tr>
@@ -408,6 +408,7 @@ export default function App() {
                   processedData.map((car, idx) => {
                     const isExpanded = expandedCarId === car.id;
                     const isPit = car.status === 'Pit';
+                    const isFav = favorites.has(car.id);
                     
                     return (
                       <React.Fragment key={car.id}>
@@ -415,16 +416,21 @@ export default function App() {
                           onClick={() => setExpandedCarId(isExpanded ? null : car.id)}
                           className={`
                             group cursor-pointer transition-all duration-200
-                            ${idx % 2 === 0 ? 'bg-[#0a0a0c]' : 'bg-[#111116]'}
-                            hover:bg-[#1a1a24] 
-                            ${isExpanded ? 'ring-1 ring-inset ring-gray-700 bg-[#15151e]' : ''}
+                            ${isFav ? 'bg-yellow-900/10 hover:bg-yellow-900/20 ring-1 ring-yellow-600/30' : (idx % 2 === 0 ? 'bg-[#0a0a0c]' : 'bg-[#111116]')}
+                            ${!isFav && 'hover:bg-[#1a1a24]'}
+                            ${isExpanded && !isFav ? 'ring-1 ring-inset ring-gray-700 bg-[#15151e]' : ''}
                           `}
                         >
+                          {/* FAVORITE TOGGLE */}
+                          <td className="px-4 py-3 whitespace-nowrap text-center" onClick={(e) => toggleFavorite(e, car.id)}>
+                             <Star className={`w-5 h-5 mx-auto transition-colors ${isFav ? 'fill-yellow-500 text-yellow-500' : 'text-gray-600 hover:text-gray-400'}`} />
+                          </td>
+
                           {/* POS */}
                           <td className="px-4 py-3 whitespace-nowrap">
                             <div className="flex items-center gap-2">
                               {renderTrendIcon(car.id)}
-                              <span className={`text-xl font-black tabular-nums ${isExpanded ? 'text-white' : 'text-gray-200'}`}>
+                              <span className={`text-xl font-black tabular-nums ${isExpanded || isFav ? 'text-white' : 'text-gray-200'}`}>
                                 {car.pos}
                               </span>
                             </div>
@@ -442,7 +448,7 @@ export default function App() {
                           
                           {/* NUMBER */}
                           <td className="px-4 py-3 whitespace-nowrap text-center">
-                            <div className="inline-flex items-center justify-center w-11 h-8 bg-white text-black font-black text-lg rounded shadow-[inset_0_0_5px_rgba(0,0,0,0.5)] border-2 border-gray-300">
+                            <div className={`inline-flex items-center justify-center w-11 h-8 bg-white text-black font-black text-lg rounded shadow-[inset_0_0_5px_rgba(0,0,0,0.5)] border-2 ${isFav ? 'border-yellow-500' : 'border-gray-300'}`}>
                               {car.number}
                             </div>
                           </td>
@@ -450,8 +456,8 @@ export default function App() {
                           {/* TEAM / CAR */}
                           <td className="px-4 py-3 whitespace-nowrap">
                             <div className="flex flex-col">
-                              <span className="text-sm font-bold text-gray-100 truncate max-w-[280px] group-hover:text-white transition-colors">{car.team}</span>
-                              <span className="text-xs text-gray-500 truncate max-w-[280px]">{car.car}</span>
+                              <span className={`text-sm font-bold truncate max-w-[280px] transition-colors ${isFav ? 'text-yellow-100' : 'text-gray-100 group-hover:text-white'}`}>{car.team}</span>
+                              <span className={`text-xs truncate max-w-[280px] ${isFav ? 'text-yellow-600' : 'text-gray-500'}`}>{car.car}</span>
                             </div>
                           </td>
                           
@@ -485,15 +491,15 @@ export default function App() {
                           <td className="px-4 py-3 whitespace-nowrap text-center">
                             <div className="flex items-center justify-center gap-1">
                               <span className="text-sm font-mono font-bold text-gray-400">{car.pits}</span>
-                              <ChevronRight className={`w-4 h-4 text-gray-600 transition-transform duration-300 ${isExpanded ? 'rotate-90 text-white' : 'opacity-0 group-hover:opacity-100'}`} />
+                              <ChevronRight className={`w-4 h-4 transition-transform duration-300 ${isExpanded ? 'rotate-90 text-white' : 'text-gray-600 opacity-0 group-hover:opacity-100'}`} />
                             </div>
                           </td>
                         </tr>
 
                         {/* STREAMING_CHUNK:Expandable Telemetry Row */}
                         {isExpanded && (
-                          <tr className="bg-[#15151e] shadow-[inset_0_4px_10px_rgba(0,0,0,0.3)]">
-                            <td colSpan="9" className="p-0 border-b-2 border-gray-700">
+                          <tr className={isFav ? "bg-yellow-950/20 shadow-[inset_0_4px_10px_rgba(0,0,0,0.3)]" : "bg-[#15151e] shadow-[inset_0_4px_10px_rgba(0,0,0,0.3)]"}>
+                            <td colSpan="10" className="p-0 border-b-2 border-gray-700">
                               <div className="px-8 py-6 grid grid-cols-1 md:grid-cols-3 gap-6 animate-in slide-in-from-top-2 duration-200">
                                 {/* Focus Panel 1: Team Info */}
                                 <div className="bg-[#0a0a0c] p-4 rounded-lg border border-gray-800/50 flex items-start gap-4">
@@ -513,25 +519,42 @@ export default function App() {
                                   </div>
                                 </div>
 
-                                {/* Focus Panel 2: Telemetry Mock */}
-                                <div className="bg-[#0a0a0c] p-4 rounded-lg border border-gray-800/50 flex flex-col justify-center">
-                                  <div className="flex justify-between items-center mb-2">
-                                    <span className="text-xs font-bold text-gray-500 uppercase">Sector 1</span>
-                                    <span className="text-sm font-mono text-gray-300">{(Math.random() * 2 + 2).toFixed(3)}</span>
+                                {/* Focus Panel 2: Telemetry Overview */}
+                                <div className="bg-[#0a0a0c] p-4 rounded-lg border border-gray-800/50 flex flex-col justify-center relative group">
+                                  {/* Tooltip for Sectors */}
+                                  <div className="absolute top-2 right-2 cursor-help text-gray-600 hover:text-white transition-colors">
+                                    <Info className="w-4 h-4" />
+                                    <div className="invisible group-hover:visible absolute right-0 top-6 w-48 p-2 bg-gray-800 text-[10px] text-gray-300 rounded shadow-xl z-20 border border-gray-600">
+                                      N24 timing splits the 25.3km track. Sector 1 is the Grand Prix circuit. Sectors 2 & 3 cover the Nordschleife (Hatzenbach to Döttinger Höhe).
+                                    </div>
                                   </div>
-                                  <div className="w-full bg-gray-800 rounded-full h-1.5 mb-4">
-                                    <div className="bg-blue-500 h-1.5 rounded-full" style={{ width: `${Math.random() * 40 + 40}%` }}></div>
+
+                                  <div className="flex justify-between items-center mb-1">
+                                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Sector 1 (GP Circuit)</span>
+                                    <span className="text-xs font-mono text-gray-300">--.---</span>
                                   </div>
-                                  <div className="flex justify-between items-center mb-2">
-                                    <span className="text-xs font-bold text-gray-500 uppercase">Sector 2</span>
-                                    <span className="text-sm font-mono text-purple-400">{(Math.random() * 2 + 1).toFixed(3)} <Zap className="inline w-3 h-3" /></span>
+                                  <div className="w-full bg-gray-800 rounded-full h-1 mb-4">
+                                    <div className="bg-blue-500/50 h-1 rounded-full w-[25%]"></div>
                                   </div>
-                                  <div className="w-full bg-gray-800 rounded-full h-1.5">
-                                    <div className="bg-purple-500 h-1.5 rounded-full" style={{ width: `${Math.random() * 40 + 60}%` }}></div>
+                                  
+                                  <div className="flex justify-between items-center mb-1">
+                                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Sector 2 (Nordschleife N)</span>
+                                    <span className="text-xs font-mono text-gray-300">--.---</span>
+                                  </div>
+                                  <div className="w-full bg-gray-800 rounded-full h-1 mb-4">
+                                    <div className="bg-purple-500/50 h-1 rounded-full w-[50%]"></div>
+                                  </div>
+
+                                  <div className="flex justify-between items-center mb-1">
+                                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Sector 3 (Nordschleife S)</span>
+                                    <span className="text-xs font-mono text-gray-300">--.---</span>
+                                  </div>
+                                  <div className="w-full bg-gray-800 rounded-full h-1">
+                                    <div className="bg-emerald-500/50 h-1 rounded-full w-[25%]"></div>
                                   </div>
                                 </div>
 
-                                {/* Focus Panel 3: Status Mock */}
+                                {/* Focus Panel 3: Status Summary */}
                                 <div className="bg-[#0a0a0c] p-4 rounded-lg border border-gray-800/50 flex flex-col items-center justify-center">
                                    <div className={`w-16 h-16 rounded-full flex items-center justify-center mb-2 shadow-lg ${isPit ? 'bg-red-900/50 text-red-500 border-2 border-red-500 animate-pulse' : 'bg-green-900/30 text-green-500 border-2 border-green-800'}`}>
                                       {isPit ? <Power className="w-8 h-8" /> : <Activity className="w-8 h-8" />}
@@ -539,7 +562,6 @@ export default function App() {
                                    <span className="text-xs font-black uppercase tracking-widest text-gray-400">
                                       {isPit ? 'Service Active' : 'On Track'}
                                    </span>
-                                   <span className="text-[10px] text-gray-600 mt-1">Stint Lap: {Math.floor(Math.random() * 12) + 1}</span>
                                 </div>
                               </div>
                             </td>

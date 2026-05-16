@@ -95,11 +95,17 @@ export default function App() {
         const liveData = JSON.parse(event.data);
         let processedCars = [];
         
-        if (liveData.cars) {
+        if (liveData.TRACKSTATE !== undefined) {
+          if (liveData.TRACKSTATE === '0') setTrackStatus(TRACK_STATUSES[0]);
+          else if (liveData.TRACKSTATE === '1') setTrackStatus(TRACK_STATUSES[1]);
+          else setTrackStatus(TRACK_STATUSES[2]); 
+        }
+
+        if (liveData.RESULT) {
+          processedCars = transformN24Data(liveData);
+        } else if (liveData.cars) {
           processedCars = liveData.cars;
           if (liveData.trackStatus) setTrackStatus(liveData.trackStatus);
-        } else {
-          processedCars = transformN24Data(liveData);
         }
         
         if (processedCars.length > 0) {

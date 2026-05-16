@@ -3,7 +3,7 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { 
   Flag, AlertTriangle, Clock, Activity, ShieldAlert, WifiOff, 
   Search, ChevronUp, ChevronDown, ChevronRight, TrendingUp, 
-  TrendingDown, Minus, Car, Power, Star, Map, Info
+  TrendingDown, Minus, Car, Power, Star
 } from 'lucide-react';
 
 const TRACK_STATUSES = [
@@ -11,70 +11,6 @@ const TRACK_STATUSES = [
   { code: 'YELLOW', text: 'Local Yellow', color: 'bg-yellow-500', textColor: 'text-gray-900' },
   { code: 'CODE60', text: 'CODE 60', color: 'bg-purple-600', textColor: 'text-white' }
 ];
-
-/* STREAMING_CHUNK:Track Map Component */
-const TrackMap = ({ trackStatus }) => {
-  const [incidentSector, setIncidentSector] = useState(null);
-
-  // Simulate an incident in a specific sector when the track status changes from Green
-  useEffect(() => {
-    if (trackStatus.code !== 'GREEN') {
-      setIncidentSector(Math.floor(Math.random() * 3) + 1);
-    } else {
-      setIncidentSector(null);
-    }
-  }, [trackStatus.code]);
-
-  // Styling helper for the SVG paths based on sector status
-  const getPathStyle = (sectorNumber) => {
-    if (incidentSector === sectorNumber) {
-      if (trackStatus.code === 'YELLOW') return "stroke-yellow-400 drop-shadow-[0_0_8px_rgba(250,204,21,0.8)] animate-pulse";
-      if (trackStatus.code === 'CODE60') return "stroke-purple-500 drop-shadow-[0_0_8px_rgba(168,85,247,0.8)] animate-pulse";
-    }
-    return "stroke-gray-600/50";
-  };
-
-  return (
-    <div className="flex items-center gap-4 bg-[#0a0a0c] px-6 py-2 rounded-xl border border-gray-800 shadow-inner">
-      <div className="flex flex-col items-end">
-        <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest flex items-center gap-1">
-          <Map className="w-3 h-3" /> Live Track Map
-        </span>
-        <span className="text-xs text-gray-400 font-mono">
-          {incidentSector ? `Incident in Sector ${incidentSector}` : 'All Sectors Clear'}
-        </span>
-      </div>
-      
-      {/* Abstracted Nordschleife + GP Circuit SVG */}
-      <svg viewBox="0 0 200 200" className="w-16 h-16 transform -rotate-12">
-        {/* Sector 1: GP Circuit */}
-        <path 
-          d="M 70,150 L 50,150 C 30,150 20,170 40,180 C 60,190 70,170 70,150 Z" 
-          fill="none" 
-          strokeWidth="8" 
-          strokeLinecap="round"
-          className={`transition-all duration-500 ${getPathStyle(1)}`} 
-        />
-        {/* Sector 2: Nordschleife North (Hatzenbach to Karussell) */}
-        <path 
-          d="M 70,150 C 50,100 20,50 80,30 C 130,10 160,30 170,70" 
-          fill="none" 
-          strokeWidth="8" 
-          strokeLinecap="round"
-          className={`transition-all duration-500 ${getPathStyle(2)}`} 
-        />
-        {/* Sector 3: Nordschleife South (Karussell to Döttinger Höhe back to GP) */}
-        <path 
-          d="M 170,70 C 180,110 160,150 140,150 L 70,150" 
-          fill="none" 
-          strokeWidth="8" 
-          strokeLinecap="round"
-          className={`transition-all duration-500 ${getPathStyle(3)}`} 
-        />
-      </svg>
-    </div>
-  );
-};
 
 /* STREAMING_CHUNK:Main Component & State Initialization */
 export default function App() {
@@ -325,17 +261,12 @@ export default function App() {
         </div>
       )}
 
-      {/* Track Status Bar & Map Integration */}
-      <div className={`w-full py-4 px-6 flex flex-col md:flex-row items-center justify-between gap-6 shadow-[inset_0_-10px_20px_rgba(0,0,0,0.2)] transition-colors duration-700 border-b border-white/10 ${trackStatus.color} ${trackStatus.textColor}`}>
-        <div className="flex items-center gap-4">
-          {trackStatus.code === 'GREEN' && <Flag className="w-10 h-10 drop-shadow-md" />}
-          {trackStatus.code === 'YELLOW' && <AlertTriangle className="w-10 h-10 animate-pulse drop-shadow-md" />}
-          {trackStatus.code === 'CODE60' && <ShieldAlert className="w-10 h-10 animate-bounce drop-shadow-md" />}
-          <span className="text-3xl font-black uppercase tracking-[0.2em] drop-shadow-md">{trackStatus.text}</span>
-        </div>
-        
-        {/* Nordschleife Track Map Component */}
-        <TrackMap trackStatus={trackStatus} />
+      {/* Track Status Bar */}
+      <div className={`w-full py-4 px-6 flex items-center justify-center gap-4 shadow-[inset_0_-10px_20px_rgba(0,0,0,0.2)] transition-colors duration-700 border-b border-white/10 ${trackStatus.color} ${trackStatus.textColor}`}>
+        {trackStatus.code === 'GREEN' && <Flag className="w-10 h-10 drop-shadow-md" />}
+        {trackStatus.code === 'YELLOW' && <AlertTriangle className="w-10 h-10 animate-pulse drop-shadow-md" />}
+        {trackStatus.code === 'CODE60' && <ShieldAlert className="w-10 h-10 animate-bounce drop-shadow-md" />}
+        <span className="text-3xl font-black uppercase tracking-[0.2em] drop-shadow-md">{trackStatus.text}</span>
       </div>
 
       <div className="max-w-[1600px] mx-auto px-4 py-6 flex flex-col xl:flex-row justify-between items-start xl:items-center gap-6">
@@ -500,7 +431,7 @@ export default function App() {
                         {isExpanded && (
                           <tr className={isFav ? "bg-yellow-950/20 shadow-[inset_0_4px_10px_rgba(0,0,0,0.3)]" : "bg-[#15151e] shadow-[inset_0_4px_10px_rgba(0,0,0,0.3)]"}>
                             <td colSpan="10" className="p-0 border-b-2 border-gray-700">
-                              <div className="px-8 py-6 grid grid-cols-1 md:grid-cols-3 gap-6 animate-in slide-in-from-top-2 duration-200">
+                              <div className="px-8 py-6 grid grid-cols-1 md:grid-cols-2 gap-6 animate-in slide-in-from-top-2 duration-200">
                                 {/* Focus Panel 1: Team Info */}
                                 <div className="bg-[#0a0a0c] p-4 rounded-lg border border-gray-800/50 flex items-start gap-4">
                                   <div className="w-16 h-16 rounded bg-gradient-to-br from-gray-700 to-gray-900 flex items-center justify-center border border-gray-600 shadow-inner shrink-0">
@@ -519,42 +450,7 @@ export default function App() {
                                   </div>
                                 </div>
 
-                                {/* Focus Panel 2: Telemetry Overview */}
-                                <div className="bg-[#0a0a0c] p-4 rounded-lg border border-gray-800/50 flex flex-col justify-center relative group">
-                                  {/* Tooltip for Sectors */}
-                                  <div className="absolute top-2 right-2 cursor-help text-gray-600 hover:text-white transition-colors">
-                                    <Info className="w-4 h-4" />
-                                    <div className="invisible group-hover:visible absolute right-0 top-6 w-48 p-2 bg-gray-800 text-[10px] text-gray-300 rounded shadow-xl z-20 border border-gray-600">
-                                      N24 timing splits the 25.3km track. Sector 1 is the Grand Prix circuit. Sectors 2 & 3 cover the Nordschleife (Hatzenbach to Döttinger Höhe).
-                                    </div>
-                                  </div>
-
-                                  <div className="flex justify-between items-center mb-1">
-                                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Sector 1 (GP Circuit)</span>
-                                    <span className="text-xs font-mono text-gray-300">--.---</span>
-                                  </div>
-                                  <div className="w-full bg-gray-800 rounded-full h-1 mb-4">
-                                    <div className="bg-blue-500/50 h-1 rounded-full w-[25%]"></div>
-                                  </div>
-                                  
-                                  <div className="flex justify-between items-center mb-1">
-                                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Sector 2 (Nordschleife N)</span>
-                                    <span className="text-xs font-mono text-gray-300">--.---</span>
-                                  </div>
-                                  <div className="w-full bg-gray-800 rounded-full h-1 mb-4">
-                                    <div className="bg-purple-500/50 h-1 rounded-full w-[50%]"></div>
-                                  </div>
-
-                                  <div className="flex justify-between items-center mb-1">
-                                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Sector 3 (Nordschleife S)</span>
-                                    <span className="text-xs font-mono text-gray-300">--.---</span>
-                                  </div>
-                                  <div className="w-full bg-gray-800 rounded-full h-1">
-                                    <div className="bg-emerald-500/50 h-1 rounded-full w-[25%]"></div>
-                                  </div>
-                                </div>
-
-                                {/* Focus Panel 3: Status Summary */}
+                                {/* Focus Panel 2: Status Summary */}
                                 <div className="bg-[#0a0a0c] p-4 rounded-lg border border-gray-800/50 flex flex-col items-center justify-center">
                                    <div className={`w-16 h-16 rounded-full flex items-center justify-center mb-2 shadow-lg ${isPit ? 'bg-red-900/50 text-red-500 border-2 border-red-500 animate-pulse' : 'bg-green-900/30 text-green-500 border-2 border-green-800'}`}>
                                       {isPit ? <Power className="w-8 h-8" /> : <Activity className="w-8 h-8" />}

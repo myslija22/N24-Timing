@@ -43,7 +43,15 @@ function connectToTimingServer() {
     });
 
     remoteSocket.on('open', () => {
-        console.log('Connected to official timing stream!');
+        console.log('Connected to official timing stream! Sending initialization message...');
+        
+        // This initialization payload tricks the N24 Server into sending you the data stream.
+        const initMessage = {
+            eventId: "50",
+            eventPid: [0, 4],
+            clientLocalTime: Date.now()
+        };
+        remoteSocket.send(JSON.stringify(initMessage));
     });
 
     remoteSocket.on('message', (data) => {
@@ -51,11 +59,11 @@ function connectToTimingServer() {
         
         try {
             const parsedData = JSON.parse(messageString);
-            latestTimingData = parsedData; 
-
+            
+            // Forward everything we receive directly to our React clients
             localServer.clients.forEach(client => {
                 if (client.readyState === WebSocket.OPEN) {
-                    client.send(JSON.stringify(latestTimingData));
+                    client.send(JSON.stringify(parsedData));
                 }
             });
         } catch (e) {
